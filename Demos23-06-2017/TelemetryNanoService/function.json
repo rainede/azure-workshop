@@ -1,0 +1,23 @@
+﻿{
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "name": "req",
+      "type": "httpTrigger",
+      "direction": "in"
+    },
+    {
+      "name": "$return",
+      "type": "http",
+      "direction": "out"
+    },
+    {
+      "type": "queue",
+      "name": "outQ",
+      "queueName": "imagequeue",
+      "connection": "journeyfunctionstorage_STORAGE",
+      "direction": "out"
+    }
+  ],
+  "disabled": false
+}

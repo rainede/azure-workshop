@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hackfest Image Demo</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+    <script>
+        var myIntervalID = 0;
+        var responseuri = "";
+        function SendImage() {
+        
+            var rootfnsite = "https://demoaifn.azurewebsites.net/api/ImageProc";
+            jQuery.ajax({
+                type: 'POST',
+                url: (rootfnsite),
+                contentType: "application/json; charset=utf-8",
+                datatype: 'json',
+                data: JSON.stringify(document.getElementById("MainContent_TextBox1").value),
+                success: function (data, textStatus, jqXHR) {
+                    
+                    // Note: this must have been a 202 accepted response as that's all the function can respond with (+ errors)
+                    document.getElementById("imagedisplay").src = document.getElementById("MainContent_TextBox1").value;
+                    $('#status').html("Accepted: Submitted image " + document.getElementById("MainContent_TextBox1").value + " for processing");
+                    
+                    // Poll for response from SAS lib every second to see if the blob 404's or not
+                    responseuriint = data;
+                    
+                    // Great, now we have our Callback URI, invoke the callback asynchronously
+                    myIntervalID = setInterval(function (responseuriint) {
+                        console.info("Checking");
+                        jQuery.ajax({
+                            type: 'GET',
+                            url: (responseuriint),
+                            success: function (dataint) {
+                                
+                                // Awesome, we have a response, kill the timer and render it.
+                                $('#status').html(dataint);
+                                console.info("Response Received, killing callback timer");
+                                clearInterval(myIntervalID);
+                            },
+                            error: function (jqXHRint, errMsgint, textStatusint) {
+                                if (jqXHRint.status === 404) {
+                                    // Still waiting for response to process, ignore the error
+                                    console.info("Still waiting for async response");
+                                }
+                                else
+                                    console.info(errMsgint);
+                            }
+                        })
+                    }, 1000, responseuriint);
+                },
+                error: function (jqXHR, errMsg, textStatus) {
+                    $('#status').html("Function Call Failed:" + errMsg);
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" runat="server" href="~/">Azure SPA and Functions Middle Tier</a>
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        <div class="jumbotron">
+            <h1>Single Page AI</h1>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Submit an Image</h3>
+                </div>
+                <div class="panel-body">
+                    <div><label id="MainContent_Label1">Please enter a path to a URI, and click a button below</label></div>
+                    <div><input id="MainContent_TextBox1" type="text"></div>
+                    <div><label id="status"></label></div>
+                    <input class="btn btn-primary" id="MainContent_Button2" type="button" value="Call AI" onclick="SendImage()" />
+                </div>
+                <div class="panel-footer">
+
+                    <img id="imagedisplay" src="https://docs.microsoft.com/_themes/docs.theme/master/en-us/_themes/images/microsoft-header.png" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2017 - Journey to the Cloud </p>
+    </footer>
+
+</body>
+
+</html>
